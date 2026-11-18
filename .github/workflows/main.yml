@@ -30,7 +30,7 @@ jobs:
       - name: Extrair projeto Android
         run: |
           mkdir extracted
-          PROJECT_ZIP="Terraria_Mod_Arcade_0.4.0.zip"
+          PROJECT_ZIP="Terraria_Mod_Arcade_0.5.0.zip"
           unzip -q "$PROJECT_ZIP" -d extracted
 
       - name: Compilar APK
@@ -47,6 +47,6 @@ jobs:
       - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
         with:
-          name:  Terraria-Mod-Arcade-APK-0.4.0
+          name:  Terraria-Mod-Arcade-APK-0.5.0
           path: extracted/**/app/build/outputs/apk/debug/*.apk
           
