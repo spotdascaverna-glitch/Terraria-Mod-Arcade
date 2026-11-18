@@ -1,0 +1,49 @@
+name: Build Terraria Mod Arcade APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**.zip'
+      - '.github/workflows/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Extrair projeto Android
+        run: |
+          mkdir extracted
+          unzip -q ./*.zip -d extracted
+
+      - name: Compilar APK
+        run: |
+          PROJECT_DIR=$(find extracted -name settings.gradle -o -name settings.gradle.kts | head -n 1 | xargs dirname)
+          cd "$PROJECT_DIR"
+          if [ -f gradlew ]; then
+            chmod +x gradlew
+            ./gradlew assembleDebug
+          else
+            gradle assembleDebug
+          fi
+
+      - name: Disponibilizar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Terraria-Mod-Arcade-APK
+          path: extracted/**/app/build/outputs/apk/debug/*.apk
