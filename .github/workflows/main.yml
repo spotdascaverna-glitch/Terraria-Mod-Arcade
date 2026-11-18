@@ -47,6 +47,6 @@ jobs:
       - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
         with:
-          name: name: Terraria-Mod-Arcade-APK-0.3.0
+          name:  Terraria-Mod-Arcade-APK-0.3.0
           path: extracted/**/app/build/outputs/apk/debug/*.apk
           
