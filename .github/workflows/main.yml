@@ -1,52 +1,44 @@
-
-name: Build Terraria Mod Arcade APK
+name: Build TMA Loader ARM32 APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - '**.zip'
+      - 'TMA_Loader_ARM32_0.1.0_SOURCE.zip'
       - '.github/workflows/**'
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Baixar projeto
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Preparar Java
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Preparar Gradle
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Extrair projeto Android
+      - name: Extract project
         run: |
           mkdir extracted
-          PROJECT_ZIP="Terraria_Mod_Arcade_0.5.0.zip"
-          unzip -q "$PROJECT_ZIP" -d extracted
+          unzip -q TMA_Loader_ARM32_0.1.0_SOURCE.zip -d extracted
 
-      - name: Compilar APK
+      - name: Build APK
         run: |
-          PROJECT_DIR=$(find extracted \( -name settings.gradle -o -name settings.gradle.kts \) | head -n 1 | xargs dirname)
+          PROJECT_DIR=$(find extracted -name settings.gradle | head -n 1 | xargs dirname)
           cd "$PROJECT_DIR"
-          if [ -f gradlew ]; then
-            chmod +x gradlew
-            ./gradlew assembleDebug
-          else
-            gradle assembleDebug
-          fi
+          gradle assembleDebug
 
-      - name: Disponibilizar APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name:  Terraria-Mod-Arcade-APK-0.5.0
+          name: TMA-Loader-ARM32-0.1.0
           path: extracted/**/app/build/outputs/apk/debug/*.apk
           
