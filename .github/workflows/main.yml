@@ -1,11 +1,12 @@
-name: Build TMA Loader ARM32 APK
+
+name: Build TMA Loader ARM32
 
 on:
   workflow_dispatch:
   push:
     paths:
       - 'TMA_Loader_ARM32_0.1.0_SOURCE.zip'
-      - '.github/workflows/**'
+      - '.github/workflows/main.yml'
 
 jobs:
   build:
@@ -20,25 +21,55 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'build-tools;35.0.0'
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Extract project
+      - name: Extract source
         run: |
           mkdir extracted
           unzip -q TMA_Loader_ARM32_0.1.0_SOURCE.zip -d extracted
+          PROJECT_DIR=$(find extracted -name settings.gradle -o -name settings.gradle.kts | head -n 1)
+          PROJECT_DIR=$(dirname "$PROJECT_DIR")
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
       - name: Build APK
         run: |
-          PROJECT_DIR=$(find extracted -name settings.gradle | head -n 1 | xargs dirname)
           cd "$PROJECT_DIR"
-          gradle assembleDebug
+          gradle --no-daemon assembleDebug
 
-      - name: Upload APK
+      - name: Locate and verify APK
+        id: verify
+        run: |
+          APK=$(find "$PROJECT_DIR" -path '*/build/outputs/apk/debug/*.apk' -type f | head -n 1)
+          test -n "$APK"
+          AAPT=$(find "$ANDROID_HOME/build-tools" -name aapt | sort -V | tail -n 1)
+          "$AAPT" dump badging "$APK" > metadata.txt
+          cat metadata.txt
+          MIN=$(sed -n "s/^sdkVersion:'\([0-9]*\)'.*/\1/p" metadata.txt | head -n 1)
+          test -n "$MIN"
+          test "$MIN" -le 29
+          echo "APK=$APK" >> "$GITHUB_ENV"
+          echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
+          ls -lh "$APK"
+          sha256sum "$APK"
+
+      - name: Verify signature
+        run: |
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$APKSIGNER" verify --verbose "$APK"
+
+      - name: Upload verified APK
         uses: actions/upload-artifact@v4
         with:
-          name: TMA-Loader-ARM32-0.1.0
-          path: extracted/**/app/build/outputs/apk/debug/*.apk
+          name: TMA-Loader-ARM32-verified
+          path: ${{ steps.verify.outputs.apk_path }}
+          if-no-files-found: error
+          
           
