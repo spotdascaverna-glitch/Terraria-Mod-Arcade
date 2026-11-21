@@ -22,13 +22,14 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            platform-tools
-            platforms;android-35
-            build-tools;35.0.0
+      - name: Install Android SDK packages
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -f "$SDKMANAGER" ]; then
+            SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)
+          fi
+          yes | "$SDKMANAGER" --licenses || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -48,7 +49,7 @@ jobs:
           APK="source/TMA_Loader_ARM32_0.2.0/app/build/outputs/apk/debug/app-debug.apk"
           test -f "$APK"
           test "$(stat -c%s "$APK")" -gt 18000
-          $ANDROID_HOME/build-tools/35.0.0/apksigner verify "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$APK"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
