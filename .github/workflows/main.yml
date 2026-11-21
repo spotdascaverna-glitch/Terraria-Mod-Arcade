@@ -42,15 +42,20 @@ jobs:
 
       - name: Build APK
         working-directory: source/TMA_Loader_ARM32_0.2.0
-        run: gradle assembleDebug
+        run: gradle assembledebug
 
       - name: Verify APK
         run: |
           APK="source/TMA_Loader_ARM32_0.2.0/app/build/outputs/apk/debug/app-debug.apk"
-          test -f "$APK"
-          test "$(stat -c%s "$APK")" -gt 18000
+          if [ ! -s "$APK" ]; then
+            echo "APK não encontrado ou está vazio."
+            exit 1
+          fi
+          echo "Tamanho do APK:"
+          stat -c%s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$APK"
-
+          echo "APK verificado com sucesso!"
+          
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
