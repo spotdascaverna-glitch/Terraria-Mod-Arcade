@@ -39,6 +39,15 @@ jobs:
       - name: Extract project
         run: |
           unzip TMA_Loader_ARM32_0.2.0_SOURCE.zip -d source
+          test -d source/TMA_Loader_ARM32_0.2.0/app/src/main
+          test -f source/TMA_Loader_ARM32_0.2.0/settings.gradle
+
+      - name: Upload complete source project
+        uses: actions/upload-artifact@v4
+        with:
+          name: TMA-Loader-Android-0.2.0-SOURCE
+          path: source/TMA_Loader_ARM32_0.2.0/
+          if-no-files-found: error
 
       - name: Build APK
         working-directory: source/TMA_Loader_ARM32_0.2.0
@@ -51,14 +60,14 @@ jobs:
             echo "APK não encontrado ou está vazio."
             exit 1
           fi
-          echo "Tamanho do APK:"
           stat -c%s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$APK"
           echo "APK verificado com sucesso!"
-          
-      - name: Upload APK
+
+      - name: Upload APK separately
         uses: actions/upload-artifact@v4
         with:
-          name: TMA-Loader-Android-0.2.0
+          name: TMA-Loader-APK-0.2.0
           path: source/TMA_Loader_ARM32_0.2.0/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
           
