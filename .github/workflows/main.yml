@@ -1,9 +1,9 @@
-name: Build TMA Loader Android 0.4.0
+name: Build TMA Loader Android 0.5.0
 
 on:
   push:
     paths:
-      - 'TMA_Loader_ARM32_0.4.0_SOURCE.zip'
+      - 'TMA_Loader_ARM32_0.5.0_SOURCE.zip'
       - '.github/workflows/main.yml'
   workflow_dispatch:
 
@@ -36,33 +36,38 @@ jobs:
 
       - name: Extract project
         run: |
-          unzip TMA_Loader_ARM32_0.4.0_SOURCE.zip -d source
-          test -f source/TMA_Loader_ARM32_0.4.0/app/src/main/java/com/spotdascaverna/tmaloader/MainActivity.java
-          test -f source/TMA_Loader_ARM32_0.4.0/settings.gradle
+          unzip TMA_Loader_ARM32_0.5.0_SOURCE.zip -d source
+          test -f source/TMA_Loader_ARM32_0.5.0/app/src/main/java/com/spotdascaverna/tmaloader/MainActivity.java
+          test -f source/TMA_Loader_ARM32_0.5.0/settings.gradle
+          grep -q "versionCode 5" source/TMA_Loader_ARM32_0.5.0/app/build.gradle
+          grep -q "versionName '0.5.0'" source/TMA_Loader_ARM32_0.5.0/app/build.gradle
 
       - name: Upload complete source project
         uses: actions/upload-artifact@v4
         with:
-          name: TMA-Loader-Android-0.4.0-SOURCE
-          path: source/TMA_Loader_ARM32_0.4.0/
+          name: TMA-Loader-Android-0.5.0-SOURCE
+          path: source/TMA_Loader_ARM32_0.5.0/
           if-no-files-found: error
 
       - name: Build APK
-        working-directory: source/TMA_Loader_ARM32_0.4.0
+        working-directory: source/TMA_Loader_ARM32_0.5.0
         run: gradle assembleDebug
 
-      - name: Verify APK
+      - name: Verify APK metadata and signature
         run: |
-          APK="source/TMA_Loader_ARM32_0.4.0/app/build/outputs/apk/debug/app-debug.apk"
+          APK="source/TMA_Loader_ARM32_0.5.0/app/build/outputs/apk/debug/app-debug.apk"
           test -s "$APK"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$APK"
-          echo "APK verificado!"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee apk-badging.txt
+          grep -q "package: name='com.spotdascaverna.tmaloader' versionCode='5' versionName='0.5.0'" apk-badging.txt
+          grep -q "sdkVersion:'23'" apk-badging.txt
+          echo "APK validado:"
           ls -lh "$APK"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TMA-Loader-APK-0.4.0
-          path: source/TMA_Loader_ARM32_0.4.0/app/build/outputs/apk/debug/app-debug.apk
+          name: TMA-Loader-APK-0.5.0
+          path: source/TMA_Loader_ARM32_0.5.0/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           
